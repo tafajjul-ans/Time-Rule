@@ -540,7 +540,7 @@ function openImageCropper(file, onCropped) {
                     const base64Image = canvas.toDataURL('image/jpeg', 0.8);
 
                     // Database ke 'imageURL' mein direct save kar do
-                    const db = getDatabase();
+                    
                     await update(ref(db, 'users/' + user.uid), {
                         imageURL: base64Image
                     });
