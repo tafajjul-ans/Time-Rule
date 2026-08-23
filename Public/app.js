@@ -544,15 +544,17 @@ function openImageCropper(file, onCropped) {
                             
                             // 2. Download URL nikalein
                             const downloadURL = await getDownloadURL(sRef);
-                            
+                          
                             // 3. Database mein 'imageURL' update karein
                             const db = getDatabase();
                             await update(ref(db, 'users/' + user.uid), {
                                 imageURL: downloadURL
-                            });
+                            }); // <-- Line 551
                             
+                            if (!userData) userData = {};
+                            userData.imageURL = downloadURL;
                             // 4. Sidebar aur Topbar par turant photo dikhane ke liye
-                            updateSidebarProfile();
+                            updateSidebarProfile(); // <-- Line 554
                             showToast("Profile picture updated successfully!", "success");
                         }
                     } catch (error) {
