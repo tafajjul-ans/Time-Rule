@@ -430,6 +430,7 @@ function switchAccountPrompt() {
 // ==========================================
 // 3. LIGHTBOX & IMAGE CROPPER MODALS
 // ==========================================
+
 function openImageCropper(file, onCropped) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -455,14 +456,12 @@ function openImageCropper(file, onCropped) {
             const ctx = canvas.getContext('2d');
             const zoomSlider = document.getElementById('zoom-slider');
 
-            // Base scale aur zoom variables
             const baseScale = Math.max(260 / img.width, 260 / img.height);
             let currentZoom = 1;
             
             let imgWidth = img.width * baseScale;
             let imgHeight = img.height * baseScale;
             
-            // Center position se shuru karein
             let posX = (260 - imgWidth) / 2;
             let posY = (260 - imgHeight) / 2;
 
@@ -474,12 +473,10 @@ function openImageCropper(file, onCropped) {
             }
             draw();
 
-            // Zoom Slider Event
             zoomSlider.oninput = (e) => {
                 let oldZoom = currentZoom;
                 currentZoom = parseFloat(e.target.value);
 
-                // Center ke hisab se zoom in/out ho
                 let oldW = img.width * baseScale * oldZoom;
                 let oldH = img.height * baseScale * oldZoom;
                 let newW = img.width * baseScale * currentZoom;
@@ -491,7 +488,6 @@ function openImageCropper(file, onCropped) {
                 draw();
             };
 
-            // Drag / Touch movement variables
             let isDragging = false;
             let startX, startY;
 
@@ -512,7 +508,6 @@ function openImageCropper(file, onCropped) {
                 isDragging = false;
             };
 
-            // Mobile Touch support
             canvas.ontouchstart = (e) => {
                 isDragging = true;
                 startX = e.touches[0].clientX - posX;
@@ -530,46 +525,52 @@ function openImageCropper(file, onCropped) {
                 isDragging = false;
             };
 
-            // Jab CROP & SAVE dabayein
+            // Jab CROP & SAVE dabayein (Debugging Version)
             document.getElementById('confirm-crop-btn').onclick = async () => {
+                alert("1. CROP & SAVE button dab gaya!");
                 closeModal();
+                
                 canvas.toBlob(async (blob) => {
+                    alert("2. Canvas blob successfully ban gaya!");
+                    
                     try {
-                        // Yahan badlav karna hai: seedha 'auth.currentUser' use karna hai
                         const user = auth.currentUser;
-                        if (user) {
-                            // 1. Firebase Storage par upload karein
-                            const sRef = storageRef(storage, 'profile_images/' + user.uid + '.jpg');
-                            await uploadBytes(sRef, blob);
-                            
-                            // 2. Download URL nikalein
-                            const downloadURL = await getDownloadURL(sRef);
-                          
-                            // 3. Database mein 'imageURL' update karein
-                            const db = getDatabase();
-                            await update(ref(db, 'users/' + user.uid), {
-                                imageURL: downloadURL
-                            }); // <-- Line 551
-                            
-                            if (!userData) userData = {};
-                            userData.imageURL = downloadURL;
-                            // 4. Sidebar aur Topbar par turant photo dikhane ke liye
-                            updateSidebarProfile(); // <-- Line 554
-                            showToast("Profile picture updated successfully!", "success");
+                        if (!user) {
+                            alert("Error: User login nahi hai!");
+                            return;
                         }
+
+                        alert("3. Firebase Storage par upload shuru ho raha hai... UID: " + user.uid);
+                        const sRef = storageRef(storage, 'profile_images/' + user.uid + '.jpg');
+                        await uploadBytes(sRef, blob);
+                        
+                        alert("4. Storage par upload ho gaya, Download URL nikal rahe hain...");
+                        const downloadURL = await getDownloadURL(sRef);
+
+                        alert("5. Database mein save ho raha hai... URL: " + downloadURL);
+                        const db = getDatabase();
+                        await update(ref(db, 'users/' + user.uid), {
+                            imageURL: downloadURL
+                        });
+
+                        if (!userData) userData = {};
+                        userData.imageURL = downloadURL;
+
+                        updateSidebarProfile();
+                        showToast("Profile picture updated successfully!", "success");
+                        alert("6. Sab kuch 100% successfully complete ho gaya!");
+
                     } catch (error) {
                         console.error("Error uploading image: ", error);
-                        showToast("Failed: " + error.message, "error");
+                        alert("ASLI ERROR MIL GAYI: " + error.message);
                     }
                 }, 'image/jpeg', 0.9);
             };
         };
-        
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
-
 
 
 // ==========================================
