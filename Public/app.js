@@ -374,12 +374,19 @@ function openForgotPasswordModal() {
                 showToast("User account record missing.", "danger");
                 return;
             }
-            const email = userSnap.val().email;
+                const email = userSnap.val().email;
 
-            await sendPasswordResetEmail(auth, email);
-            hideLoader();
-            closeModal();
-            showToast("Password reset link sent to your email.", "success");
+    const actionCodeSettings = {
+        url: 'https://time-rule.pages.dev/resetTemplate.html',
+        handleCodeInApp: true,
+    };
+    await sendPasswordResetEmail(auth, email, actionCodeSettings);
+
+    hideLoader();
+    closeModal();
+    showToast("Password reset link sent to your email.", "success");
+
+
         } catch (err) {
             hideLoader();
             showToast(err.message, "danger");
