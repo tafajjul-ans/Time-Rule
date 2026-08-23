@@ -1,0 +1,1 @@
+This is an app where you can meet your friends and follow the timetable made by the admin of your group with rules and regulations. 
