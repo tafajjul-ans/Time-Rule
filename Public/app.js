@@ -2593,3 +2593,14 @@ function debounce(func, wait) {
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
 }
+
+
+// Har jagah sahi avatar nikalne ke liye global function
+function getUserAvatar(userObj) {
+    if (!userObj) return `https://api.dicebear.com/7.x/bottts/svg?seed=default`;
+    // Yeh check karega: Pehle custom cropped image, fir photoURL, fir default bot
+    return userObj.imageURL || userObj.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${userObj.username || 'user'}`;
+}
+
+// Global scope mein expose kar do taaki HTML ya baaki JS file mein use ho sake
+window.getUserAvatar = getUserAvatar;
