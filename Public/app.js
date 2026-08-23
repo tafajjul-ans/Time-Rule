@@ -525,52 +525,45 @@ function openImageCropper(file, onCropped) {
                 isDragging = false;
             };
 
-            // Jab CROP & SAVE dabayein (Debugging Version)
+            // Jab CROP & SAVE dabayein (Base64 Direct Method - No Storage Error)
             document.getElementById('confirm-crop-btn').onclick = async () => {
-                alert("1. CROP & SAVE button dab gaya!");
                 closeModal();
                 
-                canvas.toBlob(async (blob) => {
-                    alert("2. Canvas blob successfully ban gaya!");
-                    
-                    try {
-                        const user = auth.currentUser;
-                        if (!user) {
-                            alert("Error: User login nahi hai!");
-                            return;
-                        }
-
-                        alert("3. Firebase Storage par upload shuru ho raha hai... UID: " + user.uid);
-                        const sRef = storageRef(storage, 'profile_images/' + user.uid + '.jpg');
-                        await uploadBytes(sRef, blob);
-                        
-                        alert("4. Storage par upload ho gaya, Download URL nikal rahe hain...");
-                        const downloadURL = await getDownloadURL(sRef);
-
-                        alert("5. Database mein save ho raha hai... URL: " + downloadURL);
-                        const db = getDatabase();
-                        await update(ref(db, 'users/' + user.uid), {
-                            imageURL: downloadURL
-                        });
-
-                        if (!userData) userData = {};
-                        userData.imageURL = downloadURL;
-
-                        updateSidebarProfile();
-                        showToast("Profile picture updated successfully!", "success");
-                        alert("6. Sab kuch 100% successfully complete ho gaya!");
-
-                    } catch (error) {
-                        console.error("Error uploading image: ", error);
-                        alert("ASLI ERROR MIL GAYI: " + error.message);
+                try {
+                    const user = auth.currentUser;
+                    if (!user) {
+                        showToast("User not authenticated!", "error");
+                        return;
                     }
-                }, 'image/jpeg', 0.9);
+
+                    // Canvas ko direct Base64 string mein convert kar liya (Storage ki zaroorat hi nahi!)
+                    const base64Image = canvas.toDataURL('image/jpeg', 0.8);
+
+                    // Database ke 'imageURL' mein direct save kar do
+                    const db = getDatabase();
+                    await update(ref(db, 'users/' + user.uid), {
+                        imageURL: base64Image
+                    });
+
+                    // Local memory update taaki turant dikhe
+                    if (!userData) userData = {};
+                    userData.imageURL = base64Image;
+
+                    // Sidebar aur Topbar update karo
+                    updateSidebarProfile();
+                    showToast("Profile picture updated successfully!", "success");
+
+                } catch (error) {
+                    console.error("Error saving image: ", error);
+                    showToast("Failed: " + error.message, "error");
+                }
             };
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
+
 
 
 // ==========================================
