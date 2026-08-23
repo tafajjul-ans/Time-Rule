@@ -408,10 +408,10 @@ function updateSidebarProfile() {
     if (!userData) return;
     document.getElementById('sidebar-user-name').innerText = userData.displayName;
     document.getElementById('sidebar-user-handle').innerText = `@${userData.username}`;
-    if (userData.photoURL) {
-        document.getElementById('sidebar-user-avatar').src = userData.photoURL;
-        document.getElementById('topbar-corner-avatar').src = userData.photoURL;
-    }
+    const finalAvatar = userData.imageURL || userData.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${userData.username}`;
+    document.getElementById('sidebar-user-avatar').src = finalAvatar;
+    document.getElementById('topbar-corner-avatar').src = finalAvatar;
+
 }
 
 function logoutUser() {
@@ -464,10 +464,32 @@ function openImageCropper(file, onCropped) {
             ctx.drawImage(img, sx, sy, size, size, 0, 0, 260, 260);
 
             document.getElementById('confirm-crop-btn').onclick = () => {
-                canvas.toBlob((blob) => {
+                canvas.toBlob(async (blob) => {
                     closeModal();
-                    onCropped(blob);
+                    try {
+                        const auth = getAuth();
+                        const user = auth.currentUser;
+                        if (user) {
+                            // 1. Firebase Storage par upload karein
+                            const storageRef = ref(storage, 'profile_images/' + user.uid + '.jpg');
+                            await uploadBytes(storageRef, blob);
+                            // 2. Download URL nikalein
+                            const downloadURL = await getDownloadURL(storageRef);
+                            // 3. Database mein 'imageURL' update karein
+                            const db = getDatabase();
+                            await update(ref(db, 'users/' + user.uid), {
+                                imageURL: downloadURL
+                            });
+                            // 4. Sidebar aur Topbar par turant photo dikhane ke liye
+                            updateSidebarProfile();
+                            showToast("Profile picture updated successfully!", "success");
+                        }
+                    } catch (error) {
+                        console.error("Error uploading image: ", error);
+                        showToast("Failed to update profile picture.", "error");
+                    }
                 }, 'image/jpeg', 0.9);
+
             };
         };
         img.src = e.target.result;
