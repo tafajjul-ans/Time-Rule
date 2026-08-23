@@ -2,8 +2,6 @@
 // TIME & RULE - Main Application Architecture
 // ==========================================
 
-import { getStorage, ref as sRef, uploadBytes, getDownloadURL } from "firebase/storage";
-const storage = getStorage();
 
 import { auth, db, storage } from './config.js';
 import { 
