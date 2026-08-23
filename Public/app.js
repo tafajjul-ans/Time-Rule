@@ -533,12 +533,10 @@ function openImageCropper(file, onCropped) {
             // Jab CROP & SAVE dabayein
             document.getElementById('confirm-crop-btn').onclick = async () => {
                 closeModal();
-                
                 canvas.toBlob(async (blob) => {
                     try {
-                        const auth = getAuth();
+                        // Yahan badlav karna hai: seedha 'auth.currentUser' use karna hai
                         const user = auth.currentUser;
-                        
                         if (user) {
                             // 1. Firebase Storage par upload karein
                             const sRef = storageRef(storage, 'profile_images/' + user.uid + '.jpg');
@@ -546,13 +544,13 @@ function openImageCropper(file, onCropped) {
                             
                             // 2. Download URL nikalein
                             const downloadURL = await getDownloadURL(sRef);
-
+                            
                             // 3. Database mein 'imageURL' update karein
                             const db = getDatabase();
                             await update(ref(db, 'users/' + user.uid), {
                                 imageURL: downloadURL
                             });
-
+                            
                             // 4. Sidebar aur Topbar par turant photo dikhane ke liye
                             updateSidebarProfile();
                             showToast("Profile picture updated successfully!", "success");
@@ -564,6 +562,7 @@ function openImageCropper(file, onCropped) {
                 }, 'image/jpeg', 0.9);
             };
         };
+        
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
