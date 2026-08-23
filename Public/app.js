@@ -677,26 +677,26 @@ async function viewUserProfile(uid) {
         }
     }
 
-    openModal(`
+        openModal(`
         <div class="modal-header">
             <h3>User Profile</h3>
             <button type="button" class="close-modal-btn" onclick="closeModal()">×</button>
         </div>
         <div style="text-align:center; margin-bottom:16px;">
-            <img src="${u.imageURL || u.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
-
+            <img src="${u.imageURL || u.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; cursor:pointer;" onclick="openLightbox(this.src)" title="Click to view full image">
             <h3 style="margin-top:10px;">${u.displayName}</h3>
             <p style="font-size:13px; color:var(--accent-cyan);">@${u.username}</p>
-            <p style="font-size:13px; margin-top:6px; font-style:italic; color:var(--text-muted);">"${u.bio || 'No bio provided.'}"</p>
+            <p style="font-size:13px; color:var(--accent-muted); margin-top:6px;">${u.bio || "Hey there! I am using TIME & RULE."}</p>
         </div>
         <hr style="border-color:rgba(255,255,255,0.1); margin:16px 0;">
-        <h4>Joined Groups & IDs</h4>
+        <h4 style="font-size:13px;">Joined Groups & IDs</h4>
         <div style="max-height:140px; overflow-y:auto; margin-top:8px;">
             ${groupListHtml}
         </div>
         ${inviteBtnHtml}
         <button type="button" class="futuristic-btn secondary full-width" style="margin-top:12px;" onclick="closeModal()">Close</button>
     `);
+
 }
 
 async function inviteUserToGroup(targetUid, targetName) {
