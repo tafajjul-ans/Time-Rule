@@ -437,23 +437,30 @@ function openImageCropper(file, onCropped) {
         img.onload = () => {
             openModal(`
                 <div class="modal-header">
-                    <h3>Crop Profile Photo</h3>
+                    <h3>Crop & Zoom Profile Photo</h3>
                     <button type="button" class="close-modal-btn" onclick="closeModal()">×</button>
                 </div>
-                <div style="text-align: center; cursor: grab;" id="crop-container">
-                    <canvas id="crop-canvas" width="260" height="260" style="border: 2px solid var(--accent-cyan); border-radius:12px; touch-action: none;"></canvas>
-                    <p style="font-size: 12px; color: var(--accent-muted); margin-top:8px;">Drag image to position it.</p>
+                <div style="text-align: center;" id="crop-container">
+                    <canvas id="crop-canvas" width="260" height="260" style="border: 2px solid var(--accent-cyan); border-radius:12px; touch-action: none; cursor: grab;"></canvas>
+                    <p style="font-size: 12px; color: var(--accent-muted); margin-top:6px;">Drag to move, use slider to zoom.</p>
                 </div>
-                <button type="button" id="confirm-crop-btn" class="futuristic-btn primary full-width" style="margin-top:16px;">CROP & SAVE</button>
+                <div style="margin-top: 10px; padding: 0 10px;">
+                    <label style="font-size: 12px; color: var(--accent-cyan); display: block; margin-bottom: 4px;">Zoom</label>
+                    <input type="range" id="zoom-slider" min="0.5" max="3" step="0.01" value="1" style="width: 100%; accent-color: var(--accent-cyan);">
+                </div>
+                <button type="button" id="confirm-crop-btn" class="futuristic-btn primary full-width" style="margin-top:14px;">CROP & SAVE</button>
             `);
 
             const canvas = document.getElementById('crop-canvas');
             const ctx = canvas.getContext('2d');
+            const zoomSlider = document.getElementById('zoom-slider');
 
-            // Image sizing aur initial crop position
-            let scale = Math.max(260 / img.width, 260 / img.height);
-            let imgWidth = img.width * scale;
-            let imgHeight = img.height * scale;
+            // Base scale aur zoom variables
+            const baseScale = Math.max(260 / img.width, 260 / img.height);
+            let currentZoom = 1;
+            
+            let imgWidth = img.width * baseScale;
+            let imgHeight = img.height * baseScale;
             
             // Center position se shuru karein
             let posX = (260 - imgWidth) / 2;
@@ -461,9 +468,28 @@ function openImageCropper(file, onCropped) {
 
             function draw() {
                 ctx.clearRect(0, 0, 260, 260);
-                ctx.drawImage(img, posX, posY, imgWidth, imgHeight);
+                let currentW = img.width * baseScale * currentZoom;
+                let currentH = img.height * baseScale * currentZoom;
+                ctx.drawImage(img, posX, posY, currentW, currentH);
             }
             draw();
+
+            // Zoom Slider Event
+            zoomSlider.oninput = (e) => {
+                let oldZoom = currentZoom;
+                currentZoom = parseFloat(e.target.value);
+
+                // Center ke hisab se zoom in/out ho
+                let oldW = img.width * baseScale * oldZoom;
+                let oldH = img.height * baseScale * oldZoom;
+                let newW = img.width * baseScale * currentZoom;
+                let newH = img.height * baseScale * currentZoom;
+
+                posX -= (newW - oldW) / 2;
+                posY -= (newH - oldH) / 2;
+
+                draw();
+            };
 
             // Drag / Touch movement variables
             let isDragging = false;
@@ -504,7 +530,7 @@ function openImageCropper(file, onCropped) {
                 isDragging = false;
             };
 
-            // Jab CROP dabayein toh save ho jaye aur database mein update ho jaye
+            // Jab CROP & SAVE dabayein
             document.getElementById('confirm-crop-btn').onclick = async () => {
                 closeModal();
                 
@@ -542,6 +568,7 @@ function openImageCropper(file, onCropped) {
     };
     reader.readAsDataURL(file);
 }
+
 
 
 // ==========================================
