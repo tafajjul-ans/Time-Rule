@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>TIME & RULE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Global Loading Overlay -->
+    <div id="global-loader" class="loader-overlay hidden">
+        <div class="loader-spinner"></div>
+        <p>Processing...</p>
+    </div>
+
+    <!-- Network Offline Overlay -->
+    <div id="network-overlay" class="network-overlay hidden">
+        <div style="text-align:center; padding:20px;">
+            <h1 style="color:var(--accent-danger); font-size:32px; margin-bottom:10px;">CONNECTION LOST</h1>
+            <p style="color:var(--text-muted);">Please check your internet connection. Unable to reach TIME & RULE servers.</p>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toast-container"></div>
+
+    <!-- Modal System Container -->
+    <div id="modal-backdrop" class="modal-backdrop hidden">
+        <div id="modal-box" class="glass-modal"></div>
+    </div>
+
+    <!-- AUTHENTICATION VIEW -->
+    <div id="auth-view" class="view-container active">
+        <div class="auth-wrapper">
+            <div class="auth-header">
+                <div class="brand-logo">⏱️⚖️</div>
+                <h1>TIME & <span class="gradient-text">RULE</span></h1>
+                <p>Advanced Democratic Timetable & Group Governance</p>
+            </div>
+            
+            <div class="glass-card auth-card">
+                <div class="auth-tabs">
+                    <button type="button" class="tab-btn active" data-target="login-form">Login</button>
+                    <button type="button" class="tab-btn" data-target="register-form">Register</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="login-form" class="auth-form active" onsubmit="event.preventDefault();">
+                    <div class="input-group">
+                        <label>Email or Username</label>
+                        <input type="text" id="login-email" required placeholder="username or user@domain.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <div class="password-field-wrapper">
+                            <input type="password" id="login-password" required placeholder="••••••••">
+                            <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('login-password', this)">Show</button>
+                        </div>
+                    </div>
+                    <div class="auth-actions-row">
+                        <a href="#" id="forgot-password-link">Forgot Password?</a>
+                    </div>
+                    <button type="submit" class="futuristic-btn primary full-width">LOGIN TO SYSTEM</button>
+                    <div class="divider"><span>OR</span></div>
+                    <button type="button" id="google-login-btn" class="futuristic-btn secondary full-width">
+                        <svg class="google-icon" viewBox="0 0 24 24"><path fill="#EA4335" d="M12 5c1.6 0 3 .6 4.1 1.6l3.1-3.1C17.3 1.8 14.8 1 12 1 7.4 1 3.5 3.6 1.6 7.4l3.7 2.9C6.2 7.1 8.9 5 12 5z"/><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.5h6.5c-.3 1.5-1.1 2.8-2.4 3.7l3.7 2.9c2.2-2 3.7-5 3.7-8.8z"/><path fill="#FBBC05" d="M5.3 14.7c-.2-.7-.4-1.5-.4-2.7s.2-2 .4-2.7L1.6 6.4C.6 8.4 0 10.6 0 13s.6 4.6 1.6 6.6l3.7-2.9z"/><path fill="#34A853" d="M12 23c3.2 0 6-1.1 8-3l-3.7-2.9c-1.1.7-2.5 1.2-4.3 1.2-3.1 0-5.8-2.1-6.7-5.3L1.6 15.9C3.5 19.7 7.4 23 12 23z"/></svg>
+                        Continue with Google
+                    </button>
+                </form>
+
+                <!-- Register Form -->
+                <form id="register-form" class="auth-form" onsubmit="event.preventDefault();">
+                    <div class="input-group">
+                        <label>Username <span class="hint">(3-20 chars, a-z, 0-9, _)</span></label>
+                        <input type="text" id="reg-username" required placeholder="rahul_01">
+                        <span id="username-status" class="validation-feedback"></span>
+                    </div>
+                    <div class="input-group">
+                        <label>Display Name</label>
+                        <input type="text" id="reg-displayname" required placeholder="Rahul Sharma">
+                    </div>
+                    <div class="input-group">
+                        <label>Email Address</label>
+                        <input type="email" id="reg-email" required placeholder="user@domain.com">
+                    </div>
+                    <div class="input-group">
+                        <label>Password</label>
+                        <div class="password-field-wrapper">
+                            <input type="password" id="reg-password" required placeholder="••••••••">
+                            <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('reg-password', this)">Show</button>
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label>Confirm Password</label>
+                        <div class="password-field-wrapper">
+                            <input type="password" id="reg-confirm" required placeholder="••••••••">
+                            <button type="button" class="toggle-pass-btn" onclick="togglePasswordVisibility('reg-confirm', this)">Show</button>
+                        </div>
+                    </div>
+                    <button type="submit" class="futuristic-btn primary full-width">INITIALIZE ACCOUNT</button>
+                </form>
+
+                <!-- Meta-Style PNG Brand Footer -->
+                <div class="meta-brand-footer">
+                    <img src="assets/brand-logo.png" alt="Brand Logo" onerror="this.style.display='none'">
+                    <span>FROM TAZRO</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN APP VIEW (Protected) -->
+    <div id="main-app-view" class="view-container">
+        <!-- Desktop Sidebar Navigation -->
+        <aside class="desktop-sidebar">
+            <div class="sidebar-brand">
+                <span>⏱️</span> <h2>TIME & RULE</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <button type="button" class="nav-item active" data-tab="home"><span>🏠</span> Home</button>
+                <button type="button" class="nav-item" data-tab="search"><span>🔍</span> Search</button>
+                <button type="button" class="nav-item" data-tab="groups"><span>👥</span> Groups</button>
+                <button type="button" class="nav-item" data-tab="requests"><span>📋</span> Requests <span id="badge-requests" class="badge hidden">0</span></button>
+                <button type="button" class="nav-item" data-tab="notifications"><span>🔔</span> Notifications <span id="badge-notifications" class="badge hidden">0</span></button>
+                <button type="button" class="nav-item" data-tab="settings"><span>⚙️</span> Settings</button>
+            </nav>
+            <div class="sidebar-user" id="sidebar-user-card">
+                <img id="sidebar-user-avatar" src="" alt="Avatar" onclick="openLightbox(userData?.photoURL)" style="cursor:pointer;">
+                <div class="user-meta">
+                    <h4 id="sidebar-user-name">Loading...</h4>
+                    <p id="sidebar-user-handle">@username</p>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content Wrapper -->
+        <main class="main-content-wrapper">
+            <header class="app-topbar">
+                <div class="topbar-left-cluster">
+                    <div class="topbar-title" id="current-view-title">Dashboard</div>
+                </div>
+                <div class="topbar-right-cluster">
+                    <div id="connection-status" class="connection-pill offline" title="Connection Status">
+                        <span class="status-dot"></span>
+                    </div>
+                    <img id="topbar-corner-avatar" src="" alt="Profile" class="corner-avatar" title="My Profile" onclick="switchTab('settings')">
+                </div>
+            </header>
+
+            <!-- Scrollable Tab Content Area -->
+            <div class="tab-content-container">
+                
+                <!-- HOME TAB -->
+                <section id="tab-home" class="tab-pane active">
+                    <div class="welcome-banner glass-card">
+                        <div>
+                            <h2 id="welcome-heading">Welcome back</h2>
+                            <p>Monitor your timetables, participate in democratic group votes, and track discipline.</p>
+                        </div>
+                        <div class="banner-actions">
+                            <button type="button" id="btn-open-create-group" class="futuristic-btn primary">Create Group</button>
+                            <button type="button" id="btn-open-join-group" class="futuristic-btn secondary">Join Group</button>
+                        </div>
+                    </div>
+
+                    <div class="dashboard-grid">
+                        <div class="dashboard-col">
+                            <h3>My Active Groups</h3>
+                            <div id="my-groups-list" class="cards-grid">
+                                <div class="empty-state">No groups joined yet. Create or join one to begin.</div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- SEARCH TAB -->
+                <section id="tab-search" class="tab-pane">
+                    <h3>Search</h3>
+                    <div class="glass-card" style="margin-top: 16px;">
+                        <div class="input-group">
+                            <input type="text" id="global-search-input" placeholder="Search people (username/name) or exact Group Name / 10-digit Group ID...">
+                        </div>
+                        <div class="search-filter-tabs">
+                            <button type="button" class="search-filter-btn active" data-filter="all">All</button>
+                            <button type="button" class="search-filter-btn" data-filter="people">People</button>
+                            <button type="button" class="search-filter-btn" data-filter="groups">Groups</button>
+                        </div>
+                        <div id="global-search-results" class="vertical-stack" style="margin-top: 16px;">
+                            <div class="empty-state">Type username, exact group name or 10-digit Group ID to explore.</div>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- GROUPS TAB -->
+                <section id="tab-groups" class="tab-pane">
+                    <div id="groups-container"></div>
+                </section>
+
+                <!-- REQUESTS TAB -->
+                <section id="tab-requests" class="tab-pane">
+                    <h3>Request Box & Approvals</h3>
+                    <div id="requests-list" class="vertical-stack">
+                        <div class="empty-state">No pending requests found.</div>
+                    </div>
+                </section>
+
+                <!-- NOTIFICATIONS TAB -->
+                <section id="tab-notifications" class="tab-pane">
+                    <div class="section-header-row">
+                        <h3>Notifications</h3>
+                        <button type="button" id="mark-all-read-btn" class="futuristic-btn small secondary">Mark all read</button>
+                    </div>
+                    <div id="notifications-list" class="vertical-stack">
+                        <div class="empty-state">No notifications right now.</div>
+                    </div>
+                </section>
+
+                <!-- SETTINGS TAB -->
+                <section id="tab-settings" class="tab-pane">
+                    <div id="settings-root-container"></div>
+                </section>
+
+            </div>
+        </main>
+
+        <!-- Mobile Bottom Navigation Bar -->
+        <nav class="mobile-bottom-nav">
+            <button type="button" class="mobile-nav-item active" data-tab="home"><span>🏠</span> Home</button>
+            <button type="button" class="mobile-nav-item" data-tab="search"><span>🔍</span> Search</button>
+            <button type="button" class="mobile-nav-item" data-tab="groups"><span>👥</span> Groups</button>
+            <button type="button" class="mobile-nav-item" data-tab="requests"><span>📋</span> Requests <span id="mobile-badge-requests" class="badge hidden">0</span></button>
+            <button type="button" class="mobile-nav-item" data-tab="notifications"><span>🔔</span> Alerts <span id="mobile-badge-notifications" class="badge hidden">0</span></button>
+            <button type="button" class="mobile-nav-item" data-tab="settings"><span>⚙️</span> Settings</button>
+        </nav>
+    </div>
+
+    <!-- Firebase SDK & App Logic -->
+    <script type="module" src="config.js"></script>
+    <script type="module" src="app.js"></script>
+</body>
+</html>
