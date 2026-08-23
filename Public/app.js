@@ -2573,8 +2573,17 @@ function openModal(htmlContent) {
 }
 
 function closeModal() {
-    document.getElementById('modal-backdrop').classList.add('hidden');
+    const backdrop = document.getElementById('modal-backdrop');
+    if (backdrop) {
+        backdrop.classList.add('hidden');
+    }
+    
+    const modalBox = document.getElementById('modal-box');
+    if (modalBox) {
+        modalBox.innerHTML = ''; 
+    }
 }
+
 
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
