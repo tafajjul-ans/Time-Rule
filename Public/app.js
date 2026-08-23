@@ -607,7 +607,8 @@ async function executeGlobalSearch(queryStr, filter) {
                 if (u.username.toLowerCase().includes(cleanQuery) || u.displayName.toLowerCase().includes(cleanQuery)) {
                     html += `
                         <div class="glass-card" onclick="viewUserProfile('${u.uid}')" style="display: flex; align-items: center; gap: 14px; padding: 14px; cursor: pointer;">
-                            <img src="${u.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" class="user-avatar-sm" alt="Avatar" onclick="event.stopPropagation(); openLightbox('${u.photoURL}')">
+                            <img src="${u.imageURL || u.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
+
                             <div>
                                 <h4>${u.displayName}</h4>
                                 <p style="font-size: 12px; color: var(--accent-cyan);">@${u.username}</p>
@@ -682,7 +683,8 @@ async function viewUserProfile(uid) {
             <button type="button" class="close-modal-btn" onclick="closeModal()">×</button>
         </div>
         <div style="text-align:center; margin-bottom:16px;">
-            <img src="${u.photoURL}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-cyan); cursor:pointer;" onclick="openLightbox('${u.photoURL}')">
+            <img src="${u.imageURL || u.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" style="width:80px; height:80px; border-radius:50%; object-fit:cover;">
+
             <h3 style="margin-top:10px;">${u.displayName}</h3>
             <p style="font-size:13px; color:var(--accent-cyan);">@${u.username}</p>
             <p style="font-size:13px; margin-top:6px; font-style:italic; color:var(--text-muted);">"${u.bio || 'No bio provided.'}"</p>
