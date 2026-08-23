@@ -430,16 +430,6 @@ function switchAccountPrompt() {
 // ==========================================
 // 3. LIGHTBOX & IMAGE CROPPER MODALS
 // ==========================================
-function openLightbox(url) {
-    if (!url) return;
-    openModal(`
-        <div style="text-align:center;">
-            <img src="${url}" style="max-width:100%; max-height:70vh; border-radius:16px; border:2px solid var(--accent-cyan); object-fit:contain;" alt="Profile Full">
-            <button type="button" class="futuristic-btn secondary full-width" style="margin-top:16px;" onclick="closeModal()">Close</button>
-        </div>
-    `);
-}
-
 function openImageCropper(file, onCropped) {
     const reader = new FileReader();
     reader.onload = (e) => {
@@ -450,53 +440,109 @@ function openImageCropper(file, onCropped) {
                     <h3>Crop Profile Photo</h3>
                     <button type="button" class="close-modal-btn" onclick="closeModal()">×</button>
                 </div>
-                <div style="text-align: center;">
-                    <canvas id="crop-canvas" width="260" height="260" style="border:2px solid var(--accent-cyan); border-radius:12px; max-width:100%; cursor:crosshair;"></canvas>
-                    <p style="font-size:12px; color:var(--text-muted); margin-top:8px;">Square crop area preview.</p>
+                <div style="text-align: center; cursor: grab;" id="crop-container">
+                    <canvas id="crop-canvas" width="260" height="260" style="border: 2px solid var(--accent-cyan); border-radius:12px; touch-action: none;"></canvas>
+                    <p style="font-size: 12px; color: var(--accent-muted); margin-top:8px;">Drag image to position it.</p>
                 </div>
-                <button type="button" id="confirm-crop-btn" class="futuristic-btn primary full-width" style="margin-top:16px;">CROP & APPLY</button>
+                <button type="button" id="confirm-crop-btn" class="futuristic-btn primary full-width" style="margin-top:16px;">CROP & SAVE</button>
             `);
 
             const canvas = document.getElementById('crop-canvas');
             const ctx = canvas.getContext('2d');
-            let size = Math.min(img.width, img.height);
-            let sx = (img.width - size) / 2;
-            let sy = (img.height - size) / 2;
-            ctx.drawImage(img, sx, sy, size, size, 0, 0, 260, 260);
 
-            document.getElementById('confirm-crop-btn').onclick = () => {
+            // Image sizing aur initial crop position
+            let scale = Math.max(260 / img.width, 260 / img.height);
+            let imgWidth = img.width * scale;
+            let imgHeight = img.height * scale;
+            
+            // Center position se shuru karein
+            let posX = (260 - imgWidth) / 2;
+            let posY = (260 - imgHeight) / 2;
+
+            function draw() {
+                ctx.clearRect(0, 0, 260, 260);
+                ctx.drawImage(img, posX, posY, imgWidth, imgHeight);
+            }
+            draw();
+
+            // Drag / Touch movement variables
+            let isDragging = false;
+            let startX, startY;
+
+            canvas.onmousedown = (e) => {
+                isDragging = true;
+                startX = e.clientX - posX;
+                startY = e.clientY - posY;
+            };
+
+            window.onmousemove = (e) => {
+                if (!isDragging) return;
+                posX = e.clientX - startX;
+                posY = e.clientY - startY;
+                draw();
+            };
+
+            window.onmouseup = () => {
+                isDragging = false;
+            };
+
+            // Mobile Touch support
+            canvas.ontouchstart = (e) => {
+                isDragging = true;
+                startX = e.touches[0].clientX - posX;
+                startY = e.touches[0].clientY - posY;
+            };
+
+            window.ontouchmove = (e) => {
+                if (!isDragging) return;
+                posX = e.touches[0].clientX - startX;
+                posY = e.touches[0].clientY - startY;
+                draw();
+            };
+
+            window.ontouchend = () => {
+                isDragging = false;
+            };
+
+            // Jab CROP dabayein toh save ho jaye aur database mein update ho jaye
+            document.getElementById('confirm-crop-btn').onclick = async () => {
+                closeModal();
+                
                 canvas.toBlob(async (blob) => {
-                    closeModal();
                     try {
                         const auth = getAuth();
                         const user = auth.currentUser;
+                        
                         if (user) {
                             // 1. Firebase Storage par upload karein
-                            const storageRef = ref(storage, 'profile_images/' + user.uid + '.jpg');
-                            await uploadBytes(storageRef, blob);
+                            const sRef = storageRef(storage, 'profile_images/' + user.uid + '.jpg');
+                            await uploadBytes(sRef, blob);
+                            
                             // 2. Download URL nikalein
-                            const downloadURL = await getDownloadURL(storageRef);
+                            const downloadURL = await getDownloadURL(sRef);
+
                             // 3. Database mein 'imageURL' update karein
                             const db = getDatabase();
                             await update(ref(db, 'users/' + user.uid), {
                                 imageURL: downloadURL
                             });
+
                             // 4. Sidebar aur Topbar par turant photo dikhane ke liye
                             updateSidebarProfile();
                             showToast("Profile picture updated successfully!", "success");
                         }
                     } catch (error) {
                         console.error("Error uploading image: ", error);
-                        showToast("Failed to update profile picture.", "error");
+                        showToast("Failed: " + error.message, "error");
                     }
                 }, 'image/jpeg', 0.9);
-
             };
         };
         img.src = e.target.result;
     };
     reader.readAsDataURL(file);
 }
+
 
 // ==========================================
 // 4. INCREMENTAL SEARCH & USER PROFILES
