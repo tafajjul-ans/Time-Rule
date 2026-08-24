@@ -2,7 +2,6 @@
 // TIME & RULE - Main Application Architecture
 // ==========================================
 
-
 import { auth, db, storage } from './config.js';
 import { 
     onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
@@ -61,7 +60,7 @@ window.toggleGroupOptionsMenu = toggleGroupOptionsMenu;
 window.openEditGroupModal = openEditGroupModal;
 window.promptCloseGroupTemporarily = promptCloseGroupTemporarily;
 window.promptReactivateGroup = promptReactivateGroup;
-window.confirmReactivateGroup = confirmReactivateGroup; // <-- Fixed: Exposed globally for modal click
+window.confirmReactivateGroup = confirmReactivateGroup;
 window.promptDeleteGroupPermanently = promptDeleteGroupPermanently;
 window.promptLeaveGroup = promptLeaveGroup;
 window.openRegisterClearModal = openRegisterClearModal;
@@ -69,6 +68,8 @@ window.openAdminInviteModal = openAdminInviteModal;
 window.inviteUserToGroup = inviteUserToGroup;
 window.executeClearRegisterRange = executeClearRegisterRange;
 window.toggleCustomRangeCard = toggleCustomRangeCard;
+window.togglePasswordVisibility = togglePasswordVisibility;
+window.getUserAvatar = getUserAvatar;
 
 function showLoader() {
     document.getElementById('global-loader').classList.remove('hidden');
@@ -141,7 +142,7 @@ function initNavigation() {
     }
 }
 
-window.togglePasswordVisibility = function(inputId, btn) {
+function togglePasswordVisibility(inputId, btn) {
     const input = document.getElementById(inputId);
     if (input.type === "password") {
         input.type = "text";
@@ -150,7 +151,7 @@ window.togglePasswordVisibility = function(inputId, btn) {
         input.type = "password";
         btn.innerText = "Show";
     }
-};
+}
 
 function switchTab(tabName) {
     if (!currentUser) {
@@ -375,19 +376,17 @@ function openForgotPasswordModal() {
                 showToast("User account record missing.", "danger");
                 return;
             }
-                const email = userSnap.val().email;
+            const email = userSnap.val().email;
 
-    const actionCodeSettings = {
-        url: 'https://time-rule.pages.dev/resetTemplate.html',
-        handleCodeInApp: true,
-    };
-    await sendPasswordResetEmail(auth, email, actionCodeSettings);
+            const actionCodeSettings = {
+                url: 'https://time-rule.pages.dev/resetTemplate.html',
+                handleCodeInApp: true,
+            };
+            await sendPasswordResetEmail(auth, email, actionCodeSettings);
 
-    hideLoader();
-    closeModal();
-    showToast("Password reset link sent to your email.", "success");
-
-
+            hideLoader();
+            closeModal();
+            showToast("Password reset link sent to your email.", "success");
         } catch (err) {
             hideLoader();
             showToast(err.message, "danger");
@@ -409,10 +408,9 @@ function updateSidebarProfile() {
     if (!userData) return;
     document.getElementById('sidebar-user-name').innerText = userData.displayName;
     document.getElementById('sidebar-user-handle').innerText = `@${userData.username}`;
-    const finalAvatar = userData.imageURL || userData.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${userData.username}`;
+    const finalAvatar = getUserAvatar(userData);
     document.getElementById('sidebar-user-avatar').src = finalAvatar;
     document.getElementById('topbar-corner-avatar').src = finalAvatar;
-
 }
 
 function logoutUser() {
@@ -430,6 +428,19 @@ function switchAccountPrompt() {
 // ==========================================
 // 3. LIGHTBOX & IMAGE CROPPER MODALS
 // ==========================================
+function openLightbox(url) {
+    if (!url) return;
+    openModal(`
+        <div class="modal-header">
+            <h3>Image Preview</h3>
+            <button type="button" class="close-modal-btn" onclick="closeModal()">×</button>
+        </div>
+        <div style="text-align: center;">
+            <img src="${url}" style="max-width: 100%; max-height: 70vh; border-radius: 12px; object-fit: contain;">
+            <button type="button" class="futuristic-btn secondary full-width" style="margin-top: 16px;" onclick="closeModal()">Close</button>
+        </div>
+    `);
+}
 
 function openImageCropper(file, onCropped) {
     const reader = new FileReader();
@@ -525,7 +536,6 @@ function openImageCropper(file, onCropped) {
                 isDragging = false;
             };
 
-            // Jab CROP & SAVE dabayein (Base64 Direct Method - No Storage Error)
             document.getElementById('confirm-crop-btn').onclick = async () => {
                 closeModal();
                 
@@ -536,20 +546,15 @@ function openImageCropper(file, onCropped) {
                         return;
                     }
 
-                    // Canvas ko direct Base64 string mein convert kar liya (Storage ki zaroorat hi nahi!)
                     const base64Image = canvas.toDataURL('image/jpeg', 0.8);
 
-                    // Database ke 'imageURL' mein direct save kar do
-                    
                     await update(ref(db, 'users/' + user.uid), {
                         imageURL: base64Image
                     });
 
-                    // Local memory update taaki turant dikhe
                     if (!userData) userData = {};
                     userData.imageURL = base64Image;
 
-                    // Sidebar aur Topbar update karo
                     updateSidebarProfile();
                     showToast("Profile picture updated successfully!", "success");
 
@@ -563,8 +568,6 @@ function openImageCropper(file, onCropped) {
     };
     reader.readAsDataURL(file);
 }
-
-
 
 // ==========================================
 // 4. INCREMENTAL SEARCH & USER PROFILES
@@ -607,8 +610,7 @@ async function executeGlobalSearch(queryStr, filter) {
                 if (u.username.toLowerCase().includes(cleanQuery) || u.displayName.toLowerCase().includes(cleanQuery)) {
                     html += `
                         <div class="glass-card" onclick="viewUserProfile('${u.uid}')" style="display: flex; align-items: center; gap: 14px; padding: 14px; cursor: pointer;">
-                            <img src="${u.imageURL || u.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
-
+                            <img src="${getUserAvatar(u)}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">
                             <div>
                                 <h4>${u.displayName}</h4>
                                 <p style="font-size: 12px; color: var(--accent-cyan);">@${u.username}</p>
@@ -677,13 +679,13 @@ async function viewUserProfile(uid) {
         }
     }
 
-        openModal(`
+    openModal(`
         <div class="modal-header">
             <h3>User Profile</h3>
             <button type="button" class="close-modal-btn" onclick="closeModal()">×</button>
         </div>
         <div style="text-align:center; margin-bottom:16px;">
-            <img src="${u.imageURL || u.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + u.username}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; cursor:pointer;" onclick="openLightbox(this.src)" title="Click to view full image">
+            <img src="${getUserAvatar(u)}" style="width:80px; height:80px; border-radius:50%; object-fit:cover; cursor:pointer;" onclick="openLightbox(this.src)" title="Click to view full image">
             <h3 style="margin-top:10px;">${u.displayName}</h3>
             <p style="font-size:13px; color:var(--accent-cyan);">@${u.username}</p>
             <p style="font-size:13px; color:var(--accent-muted); margin-top:6px;">${u.bio || "Hey there! I am using TIME & RULE."}</p>
@@ -696,7 +698,6 @@ async function viewUserProfile(uid) {
         ${inviteBtnHtml}
         <button type="button" class="futuristic-btn secondary full-width" style="margin-top:12px;" onclick="closeModal()">Close</button>
     `);
-
 }
 
 async function inviteUserToGroup(targetUid, targetName) {
@@ -1973,7 +1974,7 @@ function renderGroupChat(container) {
         await push(ref(db, `messages/${activeGroupId}`), {
             senderUid: currentUser.uid,
             senderName: userData.displayName,
-            senderPhoto: userData.photoURL || '',
+            senderPhoto: userData.imageURL || userData.photoURL || '',
             text,
             timestamp: serverTimestamp()
         });
@@ -2069,7 +2070,7 @@ async function renderGroupMembers(container) {
             html += `
                 <div class="glass-card" onclick="viewUserProfile('${child.uid}')" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; cursor: pointer;">
                     <div style="display: flex; align-items: center; gap: 12px;">
-                        <img src="${uInfo.photoURL || 'https://api.dicebear.com/7.x/bottts/svg?seed=' + child.uid}" class="user-avatar-sm" alt="Avatar" onclick="event.stopPropagation(); openLightbox('${uInfo.photoURL}')">
+                        <img src="${getUserAvatar(uInfo)}" class="user-avatar-sm" alt="Avatar" onclick="event.stopPropagation(); openLightbox('${getUserAvatar(uInfo)}')">
                         <div>
                             <strong>${uInfo.displayName || 'Member'}</strong>
                             <p style="font-size: 11px; color: var(--accent-cyan);">@${uInfo.username || 'user'}</p>
@@ -2227,9 +2228,10 @@ function renderSettingsView() {
     if (!container) return;
 
     if (currentSettingsSubView === 'main') {
+        const avatarUrl = getUserAvatar(userData);
         container.innerHTML = `
             <div class="profile-preview-card">
-                <img id="settings-avatar-preview" src="${userData.photoURL}" alt="Avatar" onclick="openLightbox('${userData.photoURL}')" style="cursor:pointer;" title="Click to zoom">
+                <img id="settings-avatar-preview" src="${avatarUrl}" alt="Avatar" onclick="openLightbox('${avatarUrl}')" style="cursor:pointer;" title="Click to zoom">
                 <div>
                     <h4>${userData.displayName}</h4>
                     <p style="font-size:12px; color:var(--accent-cyan);">@${userData.username}</p>
@@ -2412,7 +2414,7 @@ function openEditProfileModal() {
             <button type="button" class="close-modal-btn" onclick="closeModal()">×</button>
         </div>
         <div class="avatar-uploader" style="justify-content:center; margin-bottom:16px;">
-            <img id="modal-avatar-preview" src="${userData.photoURL}" style="width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-cyan);" alt="Avatar">
+            <img id="modal-avatar-preview" src="${getUserAvatar(userData)}" style="width:72px; height:72px; border-radius:50%; object-fit:cover; border:2px solid var(--accent-cyan);" alt="Avatar">
             <label class="futuristic-btn small secondary upload-label" style="cursor:pointer;">
                 Change Photo <input type="file" id="modal-photo-input" accept="image/*" hidden>
             </label>
@@ -2584,7 +2586,6 @@ function closeModal() {
     }
 }
 
-
 function showToast(message, type = 'success') {
     const container = document.getElementById('toast-container');
     const toast = document.createElement('div');
@@ -2605,11 +2606,9 @@ function debounce(func, wait) {
     };
 }
 
-
 // Har jagah sahi avatar nikalne ke liye global function
 function getUserAvatar(userObj) {
     if (!userObj) return `https://api.dicebear.com/7.x/bottts/svg?seed=default`;
-    // Yeh check karega: Pehle custom cropped image, fir photoURL, fir default bot
     return userObj.imageURL || userObj.photoURL || `https://api.dicebear.com/7.x/bottts/svg?seed=${userObj.username || 'user'}`;
 }
 
