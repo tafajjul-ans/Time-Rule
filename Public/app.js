@@ -1,5 +1,5 @@
 // ==========================================
-// TIME & RULE - Main Application Architecture
+// TIME & RULE - Main Application Architecture³
 // ==========================================
 
 import { auth, db, storage } from './config.js';
@@ -285,6 +285,7 @@ function initAuthListeners() {
             await updateProfile(cred.user, { displayName });
             
             const uid = cred.user.uid;
+            await sendEmailVerification(cred.user);
             const photoURL = 'https://api.dicebear.com/7.x/bottts/svg?seed=' + username;
             const userObj = {
                 uid,
