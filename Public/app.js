@@ -2342,8 +2342,10 @@ async function executeTransferAdmin(targetUid) {
         await update(ref(db, `groups/${activeGroupId}`), { adminUid: targetUid });
         await update(ref(db, `groupMembers/${activeGroupId}/${currentUser.uid}`), { role: 'member' });
         await update(ref(db, `groupMembers/${activeGroupId}/${targetUid}`), { role: 'admin' });
-        await update(ref(db, `memberships/${currentUser.uid}/${activeGroupId}`), 'member');
-        await update(ref(db, `memberships/${targetUid}/${activeGroupId}`), 'admin');
+        
+        // Memberships primitive string store karta hai, isiliye yahan set() use hoga
+        await set(ref(db, `memberships/${currentUser.uid}/${activeGroupId}`), 'member');
+        await set(ref(db, `memberships/${targetUid}/${activeGroupId}`), 'admin');
 
         hideLoader();
         closeModal();
@@ -2354,6 +2356,7 @@ async function executeTransferAdmin(targetUid) {
         showToast(err.message, "danger");
     }
 }
+
 
 async function toggleOfficer(targetUid, currentRole) {
     if (!currentUser || activeGroupRole !== 'admin') return;
