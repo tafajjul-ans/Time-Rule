@@ -511,3 +511,23 @@ h1, h2, h3, h4, h5, h6 {
     .banner-actions { width: 100%; display: flex; gap: 8px; }
     .banner-actions button { flex: 1; }
 }
+/* Push Notification Settings Switcher Style */
+.settings-menu-item .notif-status-badge {
+    font-size: 11px;
+    font-family: var(--font-mono);
+    padding: 4px 10px;
+    border-radius: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.settings-menu-item .notif-status-badge.on {
+    background: rgba(0, 230, 118, 0.15);
+    color: var(--accent-success);
+    border: 1px solid rgba(0, 230, 118, 0.3);
+}
+.settings-menu-item .notif-status-badge.off {
+    background: rgba(255, 179, 0, 0.15);
+    color: var(--accent-warning);
+    border: 1px solid rgba(255, 179, 0, 0.3);
+}
+
