@@ -29,7 +29,7 @@ messaging.onBackgroundMessage((payload) => {
 });
 
 // 2. PWA Caching & Offline Support Setup
-const CACHE_NAME = "time-rule-v6.4";
+const CACHE_NAME = "time-rule-v6.6";
 
 const APP_SHELL = [
     "./",
