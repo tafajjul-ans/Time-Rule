@@ -82,6 +82,7 @@ window.promptRemoveMember = promptRemoveMember;
 window.executeRemoveMember = executeRemoveMember;
 window.saveGroupSettings = saveGroupSettings;
 window.togglePushNotifications = togglePushNotifications;
+window.triggerPushNotification = triggerPushNotification;
 
 function showLoader() {
     document.getElementById('global-loader').classList.remove('hidden');
@@ -370,13 +371,11 @@ async function togglePushNotifications() {
     showLoader();
     try {
         if (!isChecked) {
-            // Off karne par database se token hata do
             await update(ref(db, `users/${currentUser.uid}`), { fcmToken: null });
             if (userData) userData.fcmToken = null;
             hideLoader();
             showToast("Push notifications disabled.", "warning");
         } else {
-            // On karne par browser permission lo
             const permission = await Notification.requestPermission();
             if (permission === 'granted') {
                 const token = await getToken(messaging, { 
@@ -400,12 +399,35 @@ async function togglePushNotifications() {
         }
     } catch (err) {
         hideLoader();
-        if (checkbox) checkbox.checked = !isChecked; // Error aane par switch wapas purani state par chala jaye
+        if (checkbox) checkbox.checked = !isChecked;
         console.error("Push notification toggle error:", err);
         showToast("Error updating push notifications.", "danger");
     }
 }
 
+// Cloudflare Worker Push Trigger Helper
+async function triggerPushNotification(targetUid, title, body) {
+    try {
+        if (!targetUid) return;
+        const userSnap = await get(ref(db, `users/${targetUid}`));
+        if (!userSnap.exists()) return;
+        
+        const targetUser = userSnap.val();
+        if (!targetUser.fcmToken) return;
+
+        await fetch('https://ftime-rule-push.tafajjulans142.workers.dev', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                fcmToken: targetUser.fcmToken,
+                title: title,
+                body: body
+            })
+        });
+    } catch (err) {
+        console.error("Failed to trigger push notification:", err);
+    }
+}
 
 function initForegroundMessaging() {
     try {
@@ -808,12 +830,20 @@ async function inviteUserToGroup(targetUid, targetName) {
             createdAt: serverTimestamp()
         });
 
+        // Push notification in database
         await push(ref(db, `notifications/${targetUid}`), {
             title: `Group Invitation`,
             message: `${userData.displayName} (${activeGroupRole.toUpperCase()}) invited you to join group "${activeGroupData.name}".`,
             read: false,
             timestamp: serverTimestamp()
         });
+
+        // Trigger Cloudflare Worker Push Notification
+        await triggerPushNotification(
+            targetUid, 
+            "Group Invitation", 
+            `${userData.displayName} invited you to join "${activeGroupData.name}".`
+        );
 
         hideLoader();
         closeModal();
@@ -1832,12 +1862,20 @@ function openTimetableActionModal(action, timetableId, curTitle='', curStart='',
 
         for (const mUid of members) {
             if (mUid !== currentUser.uid) {
+                // Database Notification
                 await push(ref(db, `notifications/${mUid}`), {
                     title: `Timetable ${action.toUpperCase()} Proposal`,
                     message: `Admin proposed to ${action} timetable item. Purpose: ${purpose}`,
                     read: false,
                     timestamp: serverTimestamp()
                 });
+
+                // Cloudflare Worker Push Notification Trigger
+                await triggerPushNotification(
+                    mUid,
+                    `Timetable ${action.toUpperCase()} Proposal`,
+                    `Purpose: ${purpose}`
+                );
             }
         }
 
@@ -2043,21 +2081,41 @@ async function respondJoinRequest(groupId, requestId, targetUid, isApproved) {
                 joinedAt: serverTimestamp()
             });
             await update(reqRef, { status: 'approved' });
+
+            // Database Notification
             await push(ref(db, `notifications/${targetUid}`), {
                 title: `Join Request Approved`,
                 message: `Your request to join the group has been approved!`,
                 read: false,
                 timestamp: serverTimestamp()
             });
+
+            // Cloudflare Worker Push Trigger
+            await triggerPushNotification(
+                targetUid,
+                "Join Request Approved",
+                "Your request to join the group has been approved!"
+            );
+
             showToast("Join request approved successfully.", "success");
         } else {
             await update(reqRef, { status: 'rejected' });
+
+            // Database Notification
             await push(ref(db, `notifications/${targetUid}`), {
                 title: `Join Request Rejected`,
                 message: `Your request to join the group was rejected.`,
                 read: false,
                 timestamp: serverTimestamp()
             });
+
+            // Cloudflare Worker Push Trigger
+            await triggerPushNotification(
+                targetUid,
+                "Join Request Rejected",
+                "Your request to join the group was rejected."
+            );
+
             showToast("Join request rejected.", "warning");
         }
     } catch (err) {
