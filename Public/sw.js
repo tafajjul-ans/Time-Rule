@@ -1,4 +1,36 @@
-const CACHE_NAME = "time-rule-v6.4;
+// ==========================================
+// TIME & RULE - Service Worker (Cache + FCM)
+// ==========================================
+
+// Import Firebase compat scripts for background push handling
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js');
+importScripts('https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging-compat.js');
+
+// Initialize Firebase in Service Worker
+firebase.initializeApp({
+    apiKey: "AIzaSyAwU_sFlcbr-Rrf0eHRWepD2BzCSvgNoDw",
+    authDomain: "projectsms-88bb1.firebaseapp.com",
+    databaseURL: "projectsms-88bb1-default-rtdb.firebaseio.com",
+    projectId: "projectsms-88bb1",
+    storageBucket: "projectsms-88bb1.firebasestorage.app",
+    messagingSenderId: "699855651165",
+    appId: "1:699855651165:web:69e3cab86592fe3b2e68b4"
+});
+
+const messaging = firebase.messaging();
+
+// Handle background push notifications when app is closed/in background
+messaging.onBackgroundMessage((payload) => {
+    console.log('[sw.js] Received background message: ', payload);
+    const notificationTitle = payload.notification ? payload.notification.title : "TIME & RULE Alert";
+    const notificationOptions = {
+        body: payload.notification ? payload.notification.body : "You have a new update.",
+        icon: './assets/icon-192.png'
+    };
+    self.registration.showNotification(notificationTitle, notificationOptions);
+});
+
+const CACHE_NAME = "time-rule-v6.4";
 
 const APP_SHELL = [
     "./",
@@ -7,14 +39,14 @@ const APP_SHELL = [
     "./app.js",
     "./config.js",
     "./manifest.json",
-    "./offline.html"
+    "./offline.html",
     "./resetTemplate.html",
     "./assets/brand-logo.png",
     "./assets/icon-192.png",
     "./assets/icon-512.png"
 ];
 
-// Install
+// Install Event
 self.addEventListener("install", event => {
     event.waitUntil(
         caches.open(CACHE_NAME)
@@ -23,7 +55,7 @@ self.addEventListener("install", event => {
     );
 });
 
-// Activate
+// Activate Event
 self.addEventListener("activate", event => {
     event.waitUntil(
         caches.keys().then(keys =>
@@ -36,7 +68,7 @@ self.addEventListener("activate", event => {
     );
 });
 
-// Fetch
+// Fetch Event
 self.addEventListener("fetch", event => {
     const request = event.request;
 
