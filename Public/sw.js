@@ -1,4 +1,4 @@
-const CACHE_NAME = "time-rule-v5.9;
+const CACHE_NAME = "time-rule-v6;
 
 const APP_SHELL = [
     "./",
