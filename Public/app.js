@@ -2639,12 +2639,14 @@ function renderSettingsView() {
                     <span>Edit Profile</span>
                     <span>›</span>
                 </div>
-                <div class="settings-menu-item" style="display: flex; justify-content: space-between; align-items: center;" onclick="togglePushNotifications()">
-                    <span>Push Notifications</span>
-                    <span style="font-size: 12px; font-weight: 600; color: ${notifGranted ? 'var(--accent-success)' : 'var(--accent-warning)'};">
-                        ${notifGranted ? 'ON (Tap to Disable)' : 'OFF (Tap to Enable)'}
-                    </span>
+                <div class="settings-menu-item" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>Push Notifications</span>
+                <label class="toggle-switch">
+                <input type="checkbox" id="push-toggle-checkbox" ${notifGranted ? 'checked' : ''} onchange="togglePushNotifications()">
+                <span class="slider"></span>
+                </label>
                 </div>
+
                 <div class="settings-menu-item" onclick="navigateToSettingsSub('account_center')">
                     <span>Account Center</span>
                     <span>›</span>
