@@ -6,7 +6,7 @@ import { auth, db, storage } from './config.js';
 import { 
     onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
     signOut, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, updateProfile,
-    EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser 
+    EmailAuthProvider, reauthenticateWithCredential, updatePassword, deleteUser, sendEmailVerification 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { 
     ref, set, get, update, remove, push, onValue, serverTimestamp 
@@ -242,14 +242,20 @@ function initAuthListeners() {
                 }
                 const uid = uSnap.val();
                 const userSnap = await get(ref(db, `users/${uid}`));
-                if (userSnap.exists()) email = userSnap.val().email;
+                if (userSnap.exists()) {
+                    email = userSnap.val().email;
+                } else {
+                    hideLoader();
+                    showToast("User record not found.", "danger");
+                    return;
+                }
             }
             await signInWithEmailAndPassword(auth, email, pass);
             hideLoader();
             showToast("Login successful!", "success");
         } catch (err) {
             hideLoader();
-            showToast("Incorrect password. Please check your password and try again.", "danger");
+            showToast("Incorrect password or username. Please try again.", "danger");
         }
     });
 
@@ -2344,7 +2350,6 @@ async function executeTransferAdmin(targetUid) {
         await update(ref(db, `groupMembers/${activeGroupId}/${currentUser.uid}`), { role: 'member' });
         await update(ref(db, `groupMembers/${activeGroupId}/${targetUid}`), { role: 'admin' });
         
-        // Memberships primitive string store karta hai, isiliye yahan set() use hoga
         await set(ref(db, `memberships/${currentUser.uid}/${activeGroupId}`), 'member');
         await set(ref(db, `memberships/${targetUid}/${activeGroupId}`), 'admin');
 
