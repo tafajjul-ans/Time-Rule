@@ -364,42 +364,48 @@ function initAuthListeners() {
 
 async function togglePushNotifications() {
     if (!currentUser) return;
+    const checkbox = document.getElementById('push-toggle-checkbox');
+    const isChecked = checkbox ? checkbox.checked : false;
+
     showLoader();
     try {
-        if (Notification.permission === 'granted') {
-            // If already granted, toggle off locally or update status
+        if (!isChecked) {
+            // Off karne par database se token hata do
             await update(ref(db, `users/${currentUser.uid}`), { fcmToken: null });
+            if (userData) userData.fcmToken = null;
             hideLoader();
             showToast("Push notifications disabled.", "warning");
-            renderSettingsView();
-            return;
-        }
-
-        const permission = await Notification.requestPermission();
-        if (permission === 'granted') {
-            const token = await getToken(messaging, { 
-                vapidKey: 'BBgCAKnCNkyvpZML-pCd9nhopOtS24pv1D3qQK2N-YuMH6xrQrbbjzYhJECuB_nd5DsjQwGlNkgqH-Vxfo25RzE' 
-            });
-            if (token) {
-                await update(ref(db, `users/${currentUser.uid}`), { fcmToken: token });
-                hideLoader();
-                showToast("Push notifications enabled successfully!", "success");
-                renderSettingsView();
+        } else {
+            // On karne par browser permission lo
+            const permission = await Notification.requestPermission();
+            if (permission === 'granted') {
+                const token = await getToken(messaging, { 
+                    vapidKey: 'BBgCAKnCNkyvpZML-pCd9nhopOtS24pv1D3qQK2N-YuMH6xrQrbbjzYhJECuB_nd5DsjQwGlNkgqH-Vxfo25RzE' 
+                });
+                if (token) {
+                    await update(ref(db, `users/${currentUser.uid}`), { fcmToken: token });
+                    if (userData) userData.fcmToken = token;
+                    hideLoader();
+                    showToast("Push notifications enabled successfully!", "success");
+                } else {
+                    hideLoader();
+                    if (checkbox) checkbox.checked = false;
+                    showToast("Failed to retrieve push token.", "danger");
+                }
             } else {
                 hideLoader();
-                showToast("Failed to retrieve push token.", "danger");
+                if (checkbox) checkbox.checked = false;
+                showToast("Notification permission denied by browser.", "danger");
             }
-        } else {
-            hideLoader();
-            showToast("Notification permission denied.", "danger");
-            renderSettingsView();
         }
     } catch (err) {
         hideLoader();
+        if (checkbox) checkbox.checked = !isChecked; // Error aane par switch wapas purani state par chala jaye
         console.error("Push notification toggle error:", err);
         showToast("Error updating push notifications.", "danger");
     }
 }
+
 
 function initForegroundMessaging() {
     try {
@@ -2640,12 +2646,13 @@ function renderSettingsView() {
                     <span>›</span>
                 </div>
                 <div class="settings-menu-item" style="display: flex; justify-content: space-between; align-items: center;">
-                <span>Push Notifications</span>
+                <span>🔔 Push Notifications</span>
                 <label class="toggle-switch">
-                <input type="checkbox" id="push-toggle-checkbox" ${notifGranted ? 'checked' : ''} onchange="togglePushNotifications()">
+                <input type="checkbox" id="push-toggle-checkbox" ${userData && userData.fcmToken && Notification.permission === 'granted' ? 'checked' : ''} onchange="togglePushNotifications()">
                 <span class="slider"></span>
                 </label>
                 </div>
+
 
                 <div class="settings-menu-item" onclick="navigateToSettingsSub('account_center')">
                     <span>Account Center</span>
