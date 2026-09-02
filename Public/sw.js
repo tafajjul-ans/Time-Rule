@@ -30,7 +30,7 @@ messaging.onBackgroundMessage((payload) => {
     self.registration.showNotification(notificationTitle, notificationOptions);
 });
 
-const CACHE_NAME = "time-rule-v6.4";
+const CACHE_NAME = "time-rule-v6.5";
 
 const APP_SHELL = [
     "./",
