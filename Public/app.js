@@ -2,7 +2,7 @@
 // TIME & RULE - Main Application Architecture³
 // ==========================================
 
-import { auth, db, storage } from './config.js';
+import { auth, db, storage, messaging } from './config.js';
 import { 
     onAuthStateChanged, signInWithEmailAndPassword, createUserWithEmailAndPassword, 
     signOut, sendPasswordResetEmail, GoogleAuthProvider, signInWithPopup, updateProfile,
@@ -14,6 +14,9 @@ import {
 import { 
     ref as storageRef, uploadBytes, getDownloadURL 
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+import { 
+    getToken, onMessage 
+} from "https://www.gstatic.com/firebasejs/10.8.0/firebase-messaging.js";
 
 // Global App State
 let currentUser = null;
@@ -33,6 +36,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initNavigation();
     initConnectionMonitor();
     initGlobalSearch();
+    initForegroundMessaging();
 });
 
 // Expose functions globally for ES module inline onclick handlers
@@ -77,6 +81,7 @@ window.toggleOfficer = toggleOfficer;
 window.promptRemoveMember = promptRemoveMember;
 window.executeRemoveMember = executeRemoveMember;
 window.saveGroupSettings = saveGroupSettings;
+window.togglePushNotifications = togglePushNotifications;
 
 function showLoader() {
     document.getElementById('global-loader').classList.remove('hidden');
@@ -197,7 +202,7 @@ function switchTab(tabName) {
 }
 
 // ==========================================
-// 2. AUTHENTICATION & FORGOT PASSWORD
+// 2. AUTHENTICATION & PUSH NOTIFICATIONS SETUP
 // ==========================================
 function initAuthListeners() {
     onAuthStateChanged(auth, async (user) => {
@@ -355,6 +360,58 @@ function initAuthListeners() {
             showToast(err.message, "danger");
         }
     });
+}
+
+async function togglePushNotifications() {
+    if (!currentUser) return;
+    showLoader();
+    try {
+        if (Notification.permission === 'granted') {
+            // If already granted, toggle off locally or update status
+            await update(ref(db, `users/${currentUser.uid}`), { fcmToken: null });
+            hideLoader();
+            showToast("Push notifications disabled.", "warning");
+            renderSettingsView();
+            return;
+        }
+
+        const permission = await Notification.requestPermission();
+        if (permission === 'granted') {
+            const token = await getToken(messaging, { 
+                vapidKey: 'BBgCAKnCNkyvpZML-pCd9nhopOtS24pv1D3qQK2N-YuMH6xrQrbbjzYhJECuB_nd5DsjQwGlNkgqH-Vxfo25RzE' 
+            });
+            if (token) {
+                await update(ref(db, `users/${currentUser.uid}`), { fcmToken: token });
+                hideLoader();
+                showToast("Push notifications enabled successfully!", "success");
+                renderSettingsView();
+            } else {
+                hideLoader();
+                showToast("Failed to retrieve push token.", "danger");
+            }
+        } else {
+            hideLoader();
+            showToast("Notification permission denied.", "danger");
+            renderSettingsView();
+        }
+    } catch (err) {
+        hideLoader();
+        console.error("Push notification toggle error:", err);
+        showToast("Error updating push notifications.", "danger");
+    }
+}
+
+function initForegroundMessaging() {
+    try {
+        onMessage(messaging, (payload) => {
+            console.log("Foreground message received:", payload);
+            if (payload.notification) {
+                showToast(`${payload.notification.title}: ${payload.notification.body}`, "success");
+            }
+        });
+    } catch (e) {
+        console.log("Messaging not initialized:", e);
+    }
 }
 
 function openForgotPasswordModal() {
@@ -541,8 +598,8 @@ function openImageCropper(file, onCropped) {
 
             window.ontouchmove = (e) => {
                 if (!isDragging) return;
-                posX = e.touches[0].clientX - startX;
-                posY = e.touches[0].clientY - startY;
+                posX = e.clientX - startX;
+                posY = e.clientY - startY;
                 draw();
             };
 
@@ -2566,6 +2623,7 @@ function renderSettingsView() {
 
     if (currentSettingsSubView === 'main') {
         const avatarUrl = getUserAvatar(userData);
+        const notifGranted = Notification.permission === 'granted' && userData.fcmToken;
         container.innerHTML = `
             <div class="profile-preview-card">
                 <img id="settings-avatar-preview" src="${avatarUrl}" alt="Avatar" onclick="openLightbox('${avatarUrl}')" style="cursor:pointer;" title="Click to zoom">
@@ -2580,6 +2638,12 @@ function renderSettingsView() {
                 <div class="settings-menu-item" onclick="openEditProfileModal()">
                     <span>Edit Profile</span>
                     <span>›</span>
+                </div>
+                <div class="settings-menu-item" style="display: flex; justify-content: space-between; align-items: center;" onclick="togglePushNotifications()">
+                    <span>Push Notifications</span>
+                    <span style="font-size: 12px; font-weight: 600; color: ${notifGranted ? 'var(--accent-success)' : 'var(--accent-warning)'};">
+                        ${notifGranted ? 'ON (Tap to Disable)' : 'OFF (Tap to Enable)'}
+                    </span>
                 </div>
                 <div class="settings-menu-item" onclick="navigateToSettingsSub('account_center')">
                     <span>Account Center</span>
