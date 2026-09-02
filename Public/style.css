@@ -200,9 +200,9 @@ h1, h2, h3, h4, h5, h6 {
 .toggle-pass-btn {
     position: absolute;
     right: 12px;
-    background: rgba(255, 255, 255, 0.05); /* Optional: halka background */
+    background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    color: var(--accent-cyan); /* Text color clearly visible ho */
+    color: var(--accent-cyan);
     font-family: var(--font-heading);
     font-size: 12px;
     font-weight: 600;
@@ -211,12 +211,10 @@ h1, h2, h3, h4, h5, h6 {
     cursor: pointer;
     transition: var(--transition);
 }
-
 .toggle-pass-btn:hover {
     background: rgba(0, 242, 254, 0.15);
     border-color: var(--accent-cyan);
 }
-
 
 .hint { font-size: 11px; color: var(--text-muted); }
 .validation-feedback { font-size: 12px; font-family: var(--font-mono); margin-top: 2px; }
@@ -500,18 +498,9 @@ h1, h2, h3, h4, h5, h6 {
     text-align: center;
 }
 
-/* Responsive Media Queries */
-@media (max-width: 768px) {
-    .desktop-sidebar { display: none; }
-    .mobile-bottom-nav { display: flex; }
-    .main-content-wrapper { height: calc(100vh - 65px); }
-    .app-topbar { padding: 0 16px; }
-    .tab-content-container { padding: 16px; padding-bottom: 80px; }
-    .welcome-banner { flex-direction: column; align-items: flex-start; gap: 16px; }
-    .banner-actions { width: 100%; display: flex; gap: 8px; }
-    .banner-actions button { flex: 1; }
-}
-/* Push Notification Settings Switcher Style */
+/* ==========================================
+   Push Notification Settings Status Badges
+   ========================================== */
 .settings-menu-item .notif-status-badge {
     font-size: 11px;
     font-family: var(--font-mono);
@@ -531,3 +520,14 @@ h1, h2, h3, h4, h5, h6 {
     border: 1px solid rgba(255, 179, 0, 0.3);
 }
 
+/* Responsive Media Queries */
+@media (max-width: 768px) {
+    .desktop-sidebar { display: none; }
+    .mobile-bottom-nav { display: flex; }
+    .main-content-wrapper { height: calc(100vh - 65px); }
+    .app-topbar { padding: 0 16px; }
+    .tab-content-container { padding: 16px; padding-bottom: 80px; }
+    .welcome-banner { flex-direction: column; align-items: flex-start; gap: 16px; }
+    .banner-actions { width: 100%; display: flex; gap: 8px; }
+    .banner-actions button { flex: 1; }
+}
